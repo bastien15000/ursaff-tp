@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello HomeController!{% endblock %}
+{% block stylesheets %}
+<style>
+    table, th, td {
+        border: 1px solid black;
+        padding: 5px
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+{% block body %}
+    <form method="get" id="search-company">
+        <input type="text" id="search-company-query">
+        <input type="submit" value="Rechercher">
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Raison Sociale</th>
+                <th>SIREN</th>
+                <th>SIRET</th>
+                <th>Adresse</th>
+            </tr>
+        </thead>
+        <tbody id="search-company-results">
+        </tbody>
+    </table>
+    <script>
+        const search_company = document.getElementById("search-company")
+        const search_company_query = document.getElementById("search-company-query")
+        const search_company_results = document.getElementById("search-company-results")
+
+        search_company.addEventListener("submit", (e) => {
+            e.preventDefault();
+            fetch("https://recherche-entreprises.api.gouv.fr/search?q=" + search_company_query.value)
+                .then((res) => res.json())
+                .then((companies) => {
+                    search_company_results.innerHTML = ""
+                    companies.results.forEach((company) => {
+                        let company_node = `<tr>
+                            <td>${company.nom_raison_sociale}</td>
+                            <td>${company.siren}</td>
+                            <td>${company.siege.siret}</td>
+                            <td>${company.siege.adresse}</td>
+                        </tr>`
+                        search_company_results.innerHTML += company_node
+                    })
+                })
+        })
+
+    </script>
+{% endblock %}
