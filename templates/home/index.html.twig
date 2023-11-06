@@ -13,6 +13,14 @@
         border-collapse: collapse;
         margin-top: 20px;
     }
+
+    tbody tr {
+        cursor: pointer;
+    }
+
+    tbody tr:hover {
+        background-color: #eee;
+    }
 </style>
 {% endblock %}
 {% block body %}
@@ -43,16 +51,28 @@
                 .then((res) => res.json())
                 .then((companies) => {
                     search_company_results.innerHTML = ""
+                    {# console.log(companies.results) #}
                     companies.results.forEach((company) => {
-                        let company_node = `<tr>
+                        let company_node = document.createElement('tr');
+                        company_node.innerHTML = `
                             <td>${company.nom_raison_sociale}</td>
                             <td>${company.siren}</td>
                             <td>${company.siege.siret}</td>
                             <td>${company.siege.adresse}</td>
-                        </tr>`
-                        search_company_results.innerHTML += company_node
+                        `;
+                        search_company_results.appendChild(company_node);
+                        company_node.addEventListener("click", () => {
+                            fetch("{{ path('app_create_file') }}", {
+                                method: 'POST', // ou 'PUT'
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({company: company}), // stringify les données
+                            })
+                        })
                     })
                 })
+
         })
 
     </script>
