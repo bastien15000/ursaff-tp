@@ -51,7 +51,6 @@
                 .then((res) => res.json())
                 .then((companies) => {
                     search_company_results.innerHTML = ""
-                    {# console.log(companies.results) #}
                     companies.results.forEach((company) => {
                         let company_node = document.createElement('tr');
                         company_node.innerHTML = `
@@ -63,11 +62,13 @@
                         search_company_results.appendChild(company_node);
                         company_node.addEventListener("click", () => {
                             fetch("{{ path('app_create_file') }}", {
-                                method: 'POST', // ou 'PUT'
+                                method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
-                                body: JSON.stringify({company: company}), // stringify les données
+                                body: JSON.stringify({company: company}),
+                            }).then(() => {
+                                alert("Votre fichier pour l'entreprise " + company.nom_raison_sociale + " a été crée")
                             })
                         })
                     })

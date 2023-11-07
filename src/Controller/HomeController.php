@@ -20,10 +20,11 @@ class HomeController extends AbstractController
     #[Route('/create-file', name: 'app_create_file')]
     public function createCompanyFile(Request $request): Response
     {
-
         $data = json_decode($request->getContent(), true);
         $company = $data['company'];
-        file_put_contents("./companies/company_" . $company["nom_raison_sociale"] . ".txt", $company["nom_raison_sociale"]);
+        $siege = $company["siege"];
+        $file_content = "Raison sociale : " . $company["nom_raison_sociale"] . "\nSIREN : " . $company["siren"] . "\nSIRET : " . $siege["siret"] . "\nAdresse : " . $siege["adresse"];
+        file_put_contents("./companies/" . $company["siren"] . ".txt", $file_content);
         return $this->json(["response" => $company]);
     }
 }
