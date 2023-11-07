@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block title %}Les entreprises{% endblock %}
 {% block stylesheets %}
 <style>
     table, th, td {
@@ -61,15 +61,8 @@
                         `;
                         search_company_results.appendChild(company_node);
                         company_node.addEventListener("click", () => {
-                            fetch("{{ path('app_create_file') }}", {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({company: company}),
-                            }).then(() => {
-                                alert("Votre fichier pour l'entreprise " + company.nom_raison_sociale + " a été crée")
-                            })
+                            sessionStorage.setItem("company", JSON.stringify(company))
+                            window.location.href = "{{ path('app_detail_company') }}"
                         })
                     })
                 })

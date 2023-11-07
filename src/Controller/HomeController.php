@@ -17,6 +17,12 @@ class HomeController extends AbstractController
         ]);
     }
 
+    #[Route('/detail-company', name: 'app_detail_company')]
+    public function detailCompany(Request $request): Response
+    {
+        return $this->render('home/company.html.twig');
+    }
+
     #[Route('/create-file', name: 'app_create_file')]
     public function createCompanyFile(Request $request): Response
     {

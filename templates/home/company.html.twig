@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Entreprise détail{% endblock %}
+{% block stylesheets %}
+<style>
+
+</style>
+{% endblock %}
+{% block body %}
+    <h1></h1>
+    <button id="generate_file">Générer fichier</button>
+    <form id="form_calcul_salary">
+        <input type="number" id="salary">
+        <input type="submit" value="Rechercher">
+    </form>
+    <script>
+
+        const company = JSON.parse(sessionStorage.getItem("company"))
+        const genrate_file = document.getElementById("generate_file")
+        const form_calcul_salary = document.getElementById("form_calcul_salary")
+        const salary = document.getElementById("salary")
+
+        document.querySelector("h1").textContent = company.nom_raison_sociale
+        genrate_file.addEventListener("click", () => {
+            fetch("{{ path('app_create_file') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({company: company}),
+            }).then(() => {
+                alert("Votre fichier pour l'entreprise " + company.nom_raison_sociale + " a été crée")
+            })
+        })
+
+        form_calcul_salary.addEventListener("submit", (e) => {
+            e.preventDefault()
+            let body = {
+                situation: {
+                    'salarié . contrat . salaire brut': salary.value  + ' €',
+                },
+                expressions: [
+                    'salarié . rémunération . net . à payer avant impôt',
+                    'salarié . coût total employeur'
+                ],
+            }
+            fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
+                {
+                    method: 'post',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                }).then(response => response.json()).then(data => console.log(data))
+        })
+
+    </script>
+{% endblock %}
