@@ -13,6 +13,7 @@
         <input type="number" id="salary">
         <input type="submit" value="Rechercher">
     </form>
+    <div id="affichage"></div>
     <script>
 
         const company = JSON.parse(sessionStorage.getItem("company"))
@@ -35,22 +36,35 @@
 
         form_calcul_salary.addEventListener("submit", (e) => {
             e.preventDefault()
+
+                salaire("apprentissage");
+                salaire("CDI");
+                salaire("CDD");
+                
+        })
+
+        function salaire(contrat) {
+            const affichage = document.getElementById("affichage");
+            const sallaire = document.getElementById("salary");
             let body = {
-                situation: {
-                    'salarié . contrat . salaire brut': salary.value  + ' €',
+                "situation": {
+                    "salarié . contrat . salaire brut": {
+                        "valeur": sallaire.value,
+                        "unité": "€ / mois"
                 },
-                expressions: [
-                    'salarié . rémunération . net . à payer avant impôt',
-                    'salarié . coût total employeur'
-                ],
+                "salarié . contrat": contrat
+                },
+                "expressions": [
+                    "salarié . rémunération . net . à payer avant impôt "
+                ]
             }
             fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
                 {
                     method: 'post',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
-                }).then(response => response.json()).then(data => console.log(data))
-        })
+            }).then(response => response.json()).then((data) => {affichages.innerHTML += '<p>' + data.evaluate.nodeValue + '</p>'})
+        }
 
     </script>
 {% endblock %}
