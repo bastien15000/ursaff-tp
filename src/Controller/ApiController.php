@@ -48,26 +48,71 @@ class ApiController extends AbstractController
     public function postOne(Request $request, ApiService $apiService): Response
     {
         $parameters = json_decode($request->getContent(), true);
-        if ($parameters == null) {
-            return $this->json(["message" => "Mauavais format"], 400);
-        }
-        $siren = $parameters["siren"];
-        $siret = $parameters["siret"];
-        $adresse = $parameters["adresse"];
-        $num = $adresse["num"];
-        $voie = $adresse["voie"];
-        $code_postale = $adresse["code_postale"];
-        $ville = $adresse["ville"];
-
-        $parameters["adresse"] = $num . " " . $voie . " " . $code_postale . " " . $ville;
-
-        $file = $apiService->getFileIfExists($siren);
-        if (!$file) {
-            $file_content = "Raison sociale : " . $parameters["raison_sociale"] . "\nSIREN : " . $siren . "\nSIRET : " . $siret . "\nAdresse : " . $parameters["adresse"];
-            file_put_contents("./companies/" . $siren . ".txt", $file_content);
-            return $this->json($parameters, 201);
+        
+        $error_validator = $apiService->parametersValidator($parameters);
+        if($error_validator != "") {
+            return $this->json(["message" => $error_validator], 400);
         } else {
-            return $this->json(["message" => "Il y a déjà une entreprise avec ce SIREN"], 409);
+            $parameters["adresse"] = $apiService->getAdresseString($parameters["adresse"]);
+    
+            $file = $apiService->getFileIfExists($parameters["siren"]);
+            if (!$file) {
+                $file_content = "Raison sociale : " . $parameters["raison_sociale"] . "\nSIREN : " . $parameters["siren"] . "\nSIRET : " . $parameters["siret"] . "\nAdresse : " . $parameters["adresse"];
+                file_put_contents("./companies/" . $parameters["siren"] . ".txt", $file_content);
+                return $this->json($parameters, 201);
+            } else {
+                return $this->json(["message" => "Il y a déjà une entreprise avec ce SIREN"], 409);
+            }
         }
+    }
+
+    #[Route('/api-ouverte-ent/{siren}', name: 'api_ouverte_ent_update_one', methods: ['PATCH'])]
+    public function updateOne(Request $request, ApiService $apiService): Response
+    {
+        if($apiService->hasApiAcess($request)) {
+            $parameters = json_decode($request->getContent(), true);
+            $error_validator = $apiService->parametersValidator($parameters);
+            if($error_validator != "") {
+                return $this->json(["message" => $error_validator], 400);
+            } else {
+                $siren = $request->get('siren');
+                $file = $apiService->getFileIfExists($siren);
+                if ($file) {
+                    $sirenBody = isset($parameters["siren"]) ? $parameters["siren"] : $file->siren;
+                    $siret = isset($parameters["siret"]) ? $parameters["siret"] : $file->siret;
+                    $raison_sociale = isset($parameters["raison_sociale"]) ? $parameters["raison_sociale"] : $file->raison_sociale;
+                    $parameters["adresse"] = $apiService->getAdresseString($parameters["adresse"]);
+                    $path = "./companies/" . $siren . ".txt";
+                    $file_content = "Raison sociale : " . $raison_sociale . "\nSIREN : " . $sirenBody . "\nSIRET : " . $siret . "\nAdresse : " . $parameters["adresse"];
+                    file_put_contents($path, $file_content);
+                    if(isset($parameters["siren"])) {
+                        rename($path, "./companies/" . $sirenBody . ".txt");
+                    }
+                    return $this->json($parameters, 200);
+                } else {
+                    return $this->json(["message" => "Aucune entreprise avec ce SIREN"], 404);
+                }
+            }
+        } else {
+            return $this->json(["message" => "Non authentifié"], 401);
+        }
+    }
+
+    #[Route('/api-ouverte-ent/{siren}', name: 'api_ouverte_ent_delete_one', methods: ['DELETE'])]
+    public function deleteOne(Request $request, ApiService $apiService): Response
+    {
+        if($apiService->hasApiAcess($request)) {
+            $siren = $request->get('siren');
+            $file = $apiService->getFileIfExists($siren);
+            if ($file) {
+                unlink("./companies/" . $siren . ".txt");
+                return $this->json($file, 200);
+            } else {
+                return $this->json(["message" => "Aucune entreprise avec ce SIREN"], 404);
+            }
+        } else {
+            return $this->json(["message" => "Non authentifié"], 401);
+        }
+
     }
 }
