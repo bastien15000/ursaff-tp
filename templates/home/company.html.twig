@@ -9,11 +9,40 @@
 {% block body %}
     <h1></h1>
     <button id="generate_file">Générer fichier</button>
+    <br/>
+    <br/>
     <form id="form_calcul_salary">
+        Sallaire brut
         <input type="number" id="salary">
-        <input type="submit" value="Rechercher">
+        <br/>
+        Type de contrat
+        <select id="contract">
+            <option value="">--Merci de choisir un contrat--</option>
+            <option value="CDD">CDD</option>
+            <option value="CDI">CDI</option>
+            <option value="apprentissage">apprentissage</option>
+          </select>
+          
+        <br/>
+        <br/>
+        <input type="button" onclick='salaire()' value="Rechercher"/>
     </form>
     <div id="affichage"></div>
+    <h1>Gratification minimal stage</h1>
+    <br/>
+    <br/>
+    <form id="form_calcul_salary">
+        <input type="button" onclick='gratification()' value="Rechercher"/>
+    </form>
+    <div id="affichage3"></div>
+    <h1>Indeminté CDD</h1>
+    <br/>
+    <br/>
+    <form id="form_calcul_salary">
+        <input type="number" id="salary2">
+        <input type="button" onclick='indemnité()' value="Rechercher"/>
+    </form>
+    <div id="affichage2"></div>
     <script>
 
         const company = JSON.parse(sessionStorage.getItem("company"))
@@ -43,27 +72,75 @@
                 
         })
 
-        function salaire(contrat) {
-            const affichage = document.getElementById("affichage");
-            const sallaire = document.getElementById("salary");
+        async function salaire() {
+            var affichage = document.getElementById("affichage");
+            var salaire = parseInt(document.getElementById("salary").value);
+            var contrat = document.getElementById('contract').value;
             let body = {
                 "situation": {
                     "salarié . contrat . salaire brut": {
-                        "valeur": sallaire.value,
+                        "valeur": salaire,
                         "unité": "€ / mois"
                 },
-                "salarié . contrat": contrat
+                "salarié . contrat": "'" + contrat + "'",
+                "salarié . activité partielle": "non",
+                "dirigeant": "non"
                 },
                 "expressions": [
-                    "salarié . rémunération . net . à payer avant impôt "
+                    "salarié . rémunération . net . à payer avant impôt ",
+                    "salarié . coût total employeur",
+                    "salarié . cotisations"
                 ]
             }
-            fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
+            console.log("body" +  JSON.stringify(body))
+            await fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
                 {
                     method: 'post',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
-            }).then(response => response.json()).then((data) => {affichages.innerHTML += '<p>' + data.evaluate.nodeValue + '</p>'})
+            }).then(response => response.json()).then((data) => {affichage.innerHTML = '<p>Salaire net : ' + data.evaluate[0].nodeValue + '<br/> Cout employeur : ' + data.evaluate[1].nodeValue + '<br/> Cotisations : ' + data.evaluate[2].nodeValue + '</p>'; console.log(data)}).catch(e => {console.log(e)})
+        }
+        async function indemnité() {
+            var affichage = document.getElementById("affichage2");
+            var salaire = parseInt(document.getElementById("salary2").value);
+            let body = {
+                "situation": {
+                    "salarié . contrat . salaire brut": {
+                        "valeur": salaire,
+                        "unité": "€ / mois"
+                },
+                "salarié . contrat": "'CDD'",
+                "salarié . activité partielle": "non",
+                "dirigeant": "non"
+                },
+                "expressions": [
+                    "salarié . rémunération . indemnités CDD"
+                ]
+            }
+            console.log("body" +  JSON.stringify(body))
+            await fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
+                {
+                    method: 'post',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+            }).then(response => response.json()).then((data) => {affichage.innerHTML = '<p>Salaire net : ' + data.evaluate[0].nodeValue + '€</p>'; console.log(data)}).catch(e => {console.log(e)})
+        }
+        async function gratification() {
+            var affichage = document.getElementById("affichage3");
+            let body = {
+                "situation": {
+                },
+                "expressions": [
+                    "salarié . contrat . stage . gratification minimale"
+                ]
+            }
+            console.log("body" +  JSON.stringify(body))
+            await fetch('https://mon-entreprise.urssaf.fr/api/v1/evaluate',
+                {
+                    method: 'post',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+            }).then(response => response.json()).then((data) => {affichage.innerHTML = '<p>gratification minimale : ' + data.evaluate[0].nodeValue + '€</p>'; console.log(data)}).catch(e => {console.log(e)})
         }
 
     </script>
